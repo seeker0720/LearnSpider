@@ -1,0 +1,8 @@
+*.txt
+*.jpg
+*.png
+*.pyc
+*.un~
+L_Senv/
+__pycache__/
+
