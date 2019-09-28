@@ -89,7 +89,7 @@ def download_movie_info(urls):
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sys.path.append(BASE_DIR)
 
-    fi = open(f'{BASE_DIR}\docs\豆瓣电影top250URL.md', 'w', encoding='utf8')
+    fi = open(f'{BASE_DIR}\docs\豆瓣电影top250.md', 'w', encoding='utf8')
     movie_info_list, img_url_list = get_movie_info(urls)
 
     for movie_info, img_url in zip(movie_info_list, img_url_list):
@@ -106,6 +106,7 @@ def download_movie_info(urls):
             with open(f'{BASE_DIR}\download\pictures\\{img_title}.jpg', 'wb') as f:
                 f.write(img.content)
             print(f'{img_title}  ...')
+    fi.close()
 
 
 if __name__ == '__main__':
