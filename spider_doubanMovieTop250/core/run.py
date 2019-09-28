@@ -5,6 +5,7 @@
 @Author：seeker0720
 @File：run.py
 @Date：2019/9/28 0:30
+@Instruction：爬取豆瓣top250电影，同步，速度很慢
 """
 import requests
 from bs4 import BeautifulSoup
@@ -20,14 +21,20 @@ def get_movie_info_tags(urls):
 
     for url in urls:
         # 发送请求，获得网页
-        web_data = requests.get(url)
-        # 解析网页
-        soup = BeautifulSoup(web_data.text, 'lxml')
-        # 将所需要的信息提取到列表中
-        title_list.extend((soup.select('div.hd > a')))
-        rating_num_list.extend(soup.select('span.rating_num'))
-        img_src_list.extend(soup.select('img[width="100"]'))
-        quote_list.extend(soup.select('span.inq'))
+        try:
+            tmp_web_data = requests.get(url)
+        except Exception as e:
+            print(f'WARNING: {e}')
+        else:
+            print(f'200 : {url} ')
+            web_data = tmp_web_data
+            # 解析网页
+            soup = BeautifulSoup(web_data.text, 'lxml')
+            # 将所需要的信息提取到列表中
+            title_list.extend((soup.select('div.hd > a')))
+            rating_num_list.extend(soup.select('span.rating_num'))
+            img_src_list.extend(soup.select('img[width="100"]'))
+            quote_list.extend(soup.select('span.inq'))
     return title_list, rating_num_list, img_src_list, quote_list
 
 
@@ -54,37 +61,34 @@ def get_movie_info(urls):
     return movie_info_list, img_url_list
 
 
-def output_movie_info_file(urls):
-    # 输出含有电影信息的markdown文件
+def download_movie_info(urls):
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sys.path.append(BASE_DIR)
 
     fi = open(f'{BASE_DIR}\docs\豆瓣电影top250URL.md', 'w', encoding='utf8')
-
     movie_info_list, img_url_list = get_movie_info(urls)
+
     for movie_info, img_url in zip(movie_info_list, img_url_list):
         info = f'{movie_info}\n\n![]({img_url})\n\n'
+        # 将电影信息的写入到markdown文件
         fi.write(info)
-
-
-def download_img(urls):
-    # 下载电影的海报
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    sys.path.append(BASE_DIR)
-    movie_info_list, img_url_list = get_movie_info(urls)
-    for movie_info, img_url in zip(movie_info_list, img_url_list):
-        img_title = re.findall('\[.*\]', movie_info)[0].replace('[', '').replace(']', '')
-        img = requests.get(img_url)
-        with open(f'{BASE_DIR}\download\pictures\\{img_title}.jpg', 'wb') as f:
-            f.write(img.content)
-        print(f'{img_title} is ok...')
+        # 下载电影的海报
+        img_title = re.sub('[\[,\]]', '', re.findall('\[.*\]', movie_info)[0])
+        try:
+            img = requests.get(img_url)
+        except Exception as e:
+            print(f'Error: {e}')
+        else:
+            with open(f'{BASE_DIR}\download\pictures\\{img_title}.jpg', 'wb') as f:
+                f.write(img.content)
+            print(f'{img_title}  ...')
 
 
 if __name__ == '__main__':
     url_list = ['https://movie.douban.com/top250?start=' + str(i) +
                 '&filter' for i in range(0, 250, 25)]
     print('Please wait a minutes...')
-    output_movie_info_file(urls=url_list)
-    print('Ok')
-    download_img(urls=url_list)
+    download_movie_info(urls=url_list)
+    print('Download successfully !')
+
 
